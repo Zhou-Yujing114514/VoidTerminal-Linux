@@ -9,6 +9,7 @@ pubspec.lock
 *.so
 *.dylib
 *.tar.gz
+*.deb
 
 # 其他
 .DS_Store
