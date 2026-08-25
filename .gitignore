@@ -8,6 +8,7 @@ pubspec.lock
 # 构建产物
 *.so
 *.dylib
+*.tar.gz
 
 # 其他
 .DS_Store
