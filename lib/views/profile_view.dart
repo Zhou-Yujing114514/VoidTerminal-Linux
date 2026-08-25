@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../theme.dart';
+import '../widgets.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -34,12 +35,7 @@ class ProfileView extends StatelessWidget {
                   decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(12)),
                   child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 28,
-                        backgroundColor: AppColors.vtAccent,
-                        child: Text((app.currentUser?.username ?? '?').characters.first,
-                            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                      ),
+                      AvatarWidget(name: app.currentUser?.username ?? '?', avatarUrl: app.currentUser?.avatar, radius: 28),
                       const SizedBox(width: 16),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

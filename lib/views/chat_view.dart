@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../models.dart';
 import '../theme.dart';
+import '../widgets.dart';
 
 class ChatView extends StatefulWidget {
   final Room room;
@@ -55,14 +56,13 @@ class _ChatViewState extends State<ChatView> {
     final muted = AppColors.vtMuted;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scroll.hasClients) {
+      if (_scroll.hasClients && msgs.isNotEmpty) {
         // 新消息时滚动到底部
       }
     });
 
     return Column(
       children: [
-        // 顶部标题
         Container(
           height: 56,
           color: card,
@@ -82,7 +82,6 @@ class _ChatViewState extends State<ChatView> {
             ],
           ),
         ),
-        // 消息列表
         Expanded(
           child: Container(
             color: bg,
@@ -97,11 +96,15 @@ class _ChatViewState extends State<ChatView> {
                       onRecall: msgs[i].isFromMe
                           ? () => context.read<AppState>().recallMessage(msgs[i])
                           : null,
+                      onNameTap: msgs[i].isFromMe
+                          ? null
+                          : () => context.read<AppState>().openRoom(
+                                Room('dm', msgs[i].from, msgs[i].fromName ?? msgs[i].from),
+                              ),
                     ),
                   ),
           ),
         ),
-        // 输入框
         Container(
           color: card,
           padding: const EdgeInsets.all(12),
@@ -147,8 +150,9 @@ class _ChatViewState extends State<ChatView> {
 class _MessageBubble extends StatelessWidget {
   final ChatMessage msg;
   final VoidCallback? onRecall;
+  final VoidCallback? onNameTap;
 
-  const _MessageBubble({required this.msg, this.onRecall});
+  const _MessageBubble({required this.msg, this.onRecall, this.onNameTap});
 
   String _fmtTime(int ts) {
     final d = DateTime.fromMillisecondsSinceEpoch(ts);
@@ -162,81 +166,97 @@ class _MessageBubble extends StatelessWidget {
     final me = msg.isFromMe;
     final name = msg.fromName ?? msg.from;
     final isBot = msg.fromBot == true || msg.fromRole == 'bot';
+    final baseUrl = context.read<AppState>().config.baseUrl;
 
-    return Align(
-      alignment: me ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: Column(
-          crossAxisAlignment: me ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            // 昵称
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    name,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isBot ? AppColors.vtGreen : (me ? AppColors.vtAccent : AppColors.vtMuted),
-                    ),
+    final avatar = AvatarWidget(name: name, avatarUrl: msg.fromAvatar, radius: 18);
+
+    final bubble = Column(
+      crossAxisAlignment: me ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: GestureDetector(
+            onTap: onNameTap,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isBot ? AppColors.vtGreen : (me ? AppColors.vtAccent : AppColors.vtMuted),
                   ),
-                  if (isBot) const SizedBox(width: 4),
-                  if (isBot) const Text('🤖', style: TextStyle(fontSize: 11)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 2),
-            GestureDetector(
-              onLongPress: onRecall,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: me ? AppColors.vtAccent : (isDark ? AppColors.vtCard : Colors.white),
-                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (msg.content.isNotEmpty)
-                      Text(
-                        msg.content,
-                        style: TextStyle(fontSize: 14, color: me ? Colors.white : (isDark ? AppColors.vtText : const Color(0xFF333333)), height: 1.4),
-                      ),
-                    if (msg.images != null && msg.images!.isNotEmpty)
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: msg.images!.map((u) {
-                          final url = context.read<AppState>().config.resourceUrlFor(u);
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Image.network(
-                              url,
-                              width: 160,
-                              height: 160,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                width: 160, height: 160, color: AppColors.vtBorder,
-                                child: const Icon(Icons.broken_image, color: AppColors.vtMuted),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                  ],
-                ),
-              ),
+                if (isBot) const SizedBox(width: 4),
+                if (isBot) const Text('🤖', style: TextStyle(fontSize: 11)),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(_fmtTime(msg.time), style: const TextStyle(fontSize: 10, color: AppColors.vtMuted)),
-            ),
-          ],
+          ),
         ),
+        const SizedBox(height: 2),
+        GestureDetector(
+          onLongPress: onRecall,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: me ? AppColors.vtAccent : (isDark ? AppColors.vtCard : Colors.white),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (msg.content.isNotEmpty)
+                  Text(
+                    msg.content,
+                    style: TextStyle(fontSize: 14, color: me ? Colors.white : (isDark ? AppColors.vtText : const Color(0xFF333333)), height: 1.4),
+                  ),
+                if (msg.images != null && msg.images!.isNotEmpty)
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: msg.images!.map((u) {
+                      final url = u.startsWith('http') ? u : '$baseUrl$u';
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.network(
+                          url,
+                          width: 160,
+                          height: 160,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 160, height: 160, color: AppColors.vtBorder,
+                            child: const Icon(Icons.broken_image, color: AppColors.vtMuted),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text(_fmtTime(msg.time), style: const TextStyle(fontSize: 10, color: AppColors.vtMuted)),
+        ),
+      ],
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: me
+            ? [
+                Expanded(child: Align(alignment: Alignment.centerRight, child: bubble)),
+                const SizedBox(width: 8),
+                avatar,
+              ]
+            : [
+                avatar,
+                const SizedBox(width: 8),
+                Expanded(child: Align(alignment: Alignment.centerLeft, child: bubble)),
+              ],
       ),
     );
   }

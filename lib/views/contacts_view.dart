@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../theme.dart';
+import '../widgets.dart';
 
 class ContactsView extends StatelessWidget {
   const ContactsView({super.key});
@@ -51,10 +52,7 @@ class ContactsView extends StatelessWidget {
                                     return ListTile(
                                       leading: Stack(
                                         children: [
-                                          CircleAvatar(
-                                            backgroundColor: AppColors.vtBorder,
-                                            child: Text(f.username.characters.first, style: TextStyle(color: text)),
-                                          ),
+                                          AvatarWidget(name: f.username, avatarUrl: f.avatar, radius: 20),
                                           if (online)
                                             Positioned(
                                               right: 0, bottom: 0,
@@ -66,7 +64,7 @@ class ContactsView extends StatelessWidget {
                                       title: Text(f.username, style: TextStyle(color: text, fontSize: 14)),
                                       subtitle: Text(online ? '在线' : '离线', style: TextStyle(color: muted, fontSize: 12)),
                                       onTap: () {
-                                        app.currentRoom = Room('dm', f.id, f.username);
+                                        app.openRoom(Room('dm', f.id, f.username));
                                       },
                                     );
                                   },

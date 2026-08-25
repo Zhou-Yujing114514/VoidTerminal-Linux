@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../theme.dart';
+import '../widgets.dart';
 import 'messages_view.dart';
 import 'contacts_view.dart';
 import 'discover_view.dart';
@@ -48,14 +49,7 @@ class _HomeViewState extends State<HomeView> {
                   children: [
                     const SizedBox(height: 20),
                     // 头像
-                    CircleAvatar(
-                      radius: 22,
-                      backgroundColor: AppColors.vtAccent,
-                      child: Text(
-                        (app.currentUser?.username ?? '?').characters.first,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                    AvatarWidget(name: app.currentUser?.username ?? '?', avatarUrl: app.currentUser?.avatar, radius: 22),
                     const SizedBox(height: 24),
                     _navItem(Icons.chat_bubble_outline, '消息', 0),
                     _navItem(Icons.people_outline, '联系人', 1),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../models.dart';
 import '../theme.dart';
+import '../widgets.dart';
 import 'chat_view.dart';
 
 class MessagesView extends StatelessWidget {
@@ -12,7 +13,6 @@ class MessagesView extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.vtBg : const Color(0xFFf5f5f0);
     final card = isDark ? AppColors.vtCard : Colors.white;
     final text = isDark ? AppColors.vtText : const Color(0xFF333333);
     final muted = AppColors.vtMuted;
@@ -33,39 +33,32 @@ class MessagesView extends StatelessWidget {
               Expanded(
                 child: ListView(
                   children: [
-                    // 全局大厅
                     _sessionItem(
                       context,
                       icon: Icons.public,
                       name: app.hallName,
                       subtitle: _lastMsg(app.globalMessages),
                       selected: app.currentRoom?.type == 'global',
-                      onTap: () {
-                        app.currentRoom = Room('global', '', app.hallName);
-                      },
+                      onTap: () => app.openRoom(Room('global', '', app.hallName)),
                     ),
-                    // 私聊
                     ...app.friends.map((f) => _sessionItem(
                           context,
                           icon: Icons.person,
+                          avatarUrl: f.avatar,
                           name: f.username,
                           subtitle: _lastMsg(app.dmMessages[app.dmRoomKey(app.currentUserId, f.id)] ?? []),
                           online: app.isOnline(f.id),
                           selected: app.currentRoom?.type == 'dm' && app.currentRoom?.id == f.id,
-                          onTap: () {
-                            app.currentRoom = Room('dm', f.id, f.username);
-                          },
+                          onTap: () => app.openRoom(Room('dm', f.id, f.username)),
                         )),
-                    // 群聊
                     ...app.groups.map((g) => _sessionItem(
                           context,
                           icon: Icons.group,
+                          avatarUrl: g.avatar,
                           name: g.name,
                           subtitle: _lastMsg(app.groupMessages[g.id] ?? []),
                           selected: app.currentRoom?.type == 'group' && app.currentRoom?.id == g.id,
-                          onTap: () {
-                            app.currentRoom = Room('group', g.id, g.name);
-                          },
+                          onTap: () => app.openRoom(Room('group', g.id, g.name)),
                         )),
                     if (app.friends.isEmpty && app.groups.isEmpty)
                       Padding(
@@ -99,6 +92,7 @@ class MessagesView extends StatelessWidget {
     BuildContext context, {
     required IconData icon,
     required String name,
+    String? avatarUrl,
     required String subtitle,
     bool online = false,
     required bool selected,
@@ -116,11 +110,14 @@ class MessagesView extends StatelessWidget {
           children: [
             Stack(
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: selected ? AppColors.vtAccent : AppColors.vtBorder,
-                  child: Icon(icon, size: 18, color: text),
-                ),
+                if (avatarUrl != null && avatarUrl.isNotEmpty)
+                  AvatarWidget(name: name, avatarUrl: avatarUrl, radius: 18)
+                else
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: selected ? AppColors.vtAccent : AppColors.vtBorder,
+                    child: Icon(icon, size: 18, color: text),
+                  ),
                 if (online)
                   Positioned(
                     right: 0,

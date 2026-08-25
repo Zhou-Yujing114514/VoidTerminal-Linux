@@ -328,6 +328,11 @@ class AppState extends ChangeNotifier {
 
   bool isOnline(String id) => onlineUsers.contains(id);
 
+  void openRoom(Room room) {
+    currentRoom = room;
+    notifyListeners();
+  }
+
   void showToast(String text) {
     toast = text;
     notifyListeners();

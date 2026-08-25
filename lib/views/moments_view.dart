@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../models.dart';
 import '../theme.dart';
+import '../widgets.dart';
 
 class MomentsView extends StatefulWidget {
   const MomentsView({super.key});
@@ -129,10 +130,7 @@ class _MomentCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                backgroundColor: AppColors.vtAccent,
-                child: Text((moment.authorName ?? '?').characters.first, style: const TextStyle(color: Colors.white)),
-              ),
+              AvatarWidget(name: moment.authorName ?? '?', avatarUrl: moment.authorAvatar, radius: 20),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

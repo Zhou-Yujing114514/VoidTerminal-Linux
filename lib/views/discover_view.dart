@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../theme.dart';
+import '../widgets.dart';
 import 'moments_view.dart';
 
 class DiscoverView extends StatelessWidget {
@@ -72,11 +73,11 @@ class DiscoverView extends StatelessWidget {
                                           itemBuilder: (context, i) {
                                             final g = app.groups[i];
                                             return ListTile(
-                                              leading: const Icon(Icons.group, color: AppColors.vtAccent),
+                                              leading: AvatarWidget(name: g.name, avatarUrl: g.avatar, radius: 20),
                                               title: Text(g.name, style: TextStyle(color: text, fontSize: 14)),
                                               subtitle: Text('${g.members.length} 人', style: TextStyle(color: muted, fontSize: 12)),
                                               onTap: () {
-                                                app.currentRoom = Room('group', g.id, g.name);
+                                                app.openRoom(Room('group', g.id, g.name));
                                               },
                                             );
                                           },
