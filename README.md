@@ -18,6 +18,29 @@
 - Flutter（Dart）
 - http、web_socket_channel、provider
 
+## 安装
+
+### Debian / Ubuntu（deb 包）
+
+从 [Releases](https://github.com/Zhou-Yujing114514/VoidTerminal-Linux/releases) 下载 `void-terminal_1.0.0_amd64.deb`：
+
+```bash
+sudo dpkg -i void-terminal_1.0.0_amd64.deb
+# 或
+sudo apt install ./void-terminal_1.0.0_amd64.deb
+```
+
+安装后在应用菜单搜索「虚空终端」启动，或命令行运行 `void-terminal`。
+
+### 绿色版（tar.gz）
+
+解压后直接运行：
+
+```bash
+tar xzf void_terminal_linux.tar.gz
+./void_terminal_linux
+```
+
 ## 构建
 
 ```bash
