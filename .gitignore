@@ -1,0 +1,15 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+pubspec.lock
+
+# 构建产物
+*.so
+*.dylib
+
+# 其他
+.DS_Store
+.idea/
+.vscode/
