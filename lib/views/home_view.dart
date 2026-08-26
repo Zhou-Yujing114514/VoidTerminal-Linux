@@ -16,8 +16,6 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  int _index = 0;
-
   @override
   void initState() {
     super.initState();
@@ -62,7 +60,7 @@ class _HomeViewState extends State<HomeView> {
               // 右侧内容
               Expanded(
                 child: IndexedStack(
-                  index: _index,
+                  index: app.currentTab,
                   children: const [
                     MessagesView(),
                     ContactsView(),
@@ -96,10 +94,14 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Widget _navItem(IconData icon, String label, int idx) {
-    final selected = _index == idx;
+    final app = context.read<AppState>();
+    final selected = app.currentTab == idx;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
-      onTap: () => setState(() => _index = idx),
+      onTap: () {
+        app.currentTab = idx;
+        app.notifyListeners();
+      },
       child: Container(
         width: 72,
         padding: const EdgeInsets.symmetric(vertical: 12),

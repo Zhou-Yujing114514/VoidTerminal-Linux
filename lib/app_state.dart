@@ -38,6 +38,7 @@ class AppState extends ChangeNotifier {
   bool isSearching = false;
 
   Room? currentRoom;
+  int currentTab = 0;
   String currentUserId = '';
   String currentUserName = '我';
 
@@ -330,6 +331,7 @@ class AppState extends ChangeNotifier {
 
   void openRoom(Room room) {
     currentRoom = room;
+    currentTab = 0; // 切到消息页显示聊天窗口
     notifyListeners();
   }
 
