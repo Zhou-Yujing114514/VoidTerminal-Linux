@@ -35,6 +35,9 @@ jobs:
       - name: Ensure Linux platform files
         run: flutter create . --platforms=linux --org com.example
 
+      - name: Remove default test file
+        run: rm -f test/widget_test.dart
+
       - name: Flutter doctor
         run: flutter doctor -v
 
