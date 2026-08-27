@@ -1,0 +1,97 @@
+name: Build Linux
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Flutter doctor
+        run: flutter doctor -v
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze code
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Build Linux release
+        id: build
+        run: flutter build linux --release --verbose > build_log.txt 2>&1
+        continue-on-error: true
+
+      - name: Upload build log artifact (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build_log.txt
+          retention-days: 7
+
+      - name: On failure, write log back to repo
+        if: steps.build.outcome == 'failure'
+        run: |
+          mkdir -p diag
+          cp build_log.txt diag/build_log.txt
+          tail -200 build_log.txt > diag/build_log_tail.txt
+
+      - name: Commit diagnostic log (on failure)
+        if: steps.build.outcome == 'failure'
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "github-actions[bot]"
+          git add diag/
+          git commit -m "diag: attach flutter build failure log [skip ci]" || exit 0
+          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+        continue-on-error: true
+
+      - name: Check build result
+        run: |
+          tail -80 build_log.txt
+          if [ -f build/linux/x64/release/bundle/void_terminal_linux ]; then
+            echo "BUILD SUCCEEDED"
+          else
+            echo "BUILD FAILED (see build-log artifact / diag/ folder)"
+            exit 1
+          fi
+
+      - name: Package build output
+        if: success()
+        run: |
+          cd build/linux/x64/release/bundle
+          tar czf ../../../../VoidTerminal-Linux.tar.gz .
+          cd ../../../../
+
+      - name: Upload artifacts (on success)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoidTerminal-Linux
+          path: VoidTerminal-Linux.tar.gz
+          retention-days: 30
