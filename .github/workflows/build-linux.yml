@@ -32,6 +32,9 @@ jobs:
       - name: Enable Linux desktop
         run: flutter config --enable-linux-desktop
 
+      - name: Ensure Linux platform files
+        run: flutter create . --platforms=linux --org com.example
+
       - name: Flutter doctor
         run: flutter doctor -v
 
