@@ -53,7 +53,7 @@ jobs:
           sudo git clone --depth 1 -b stable https://github.com/flutter/flutter.git /opt/flutter
           sudo chown -R "$USER":"$USER" /opt/flutter
           echo "/opt/flutter/bin" >> "$GITHUB_PATH"
-          flutter --version
+          /opt/flutter/bin/flutter --version
 
       - name: Enable Linux desktop
         run: flutter config --enable-linux-desktop
