@@ -20,10 +20,12 @@ jobs:
           - arch: amd64
             target: x64
             runner: ubuntu-latest
+            flutter_arch: x64
             sfx: ""
           - arch: arm64
             target: arm64
             runner: ubuntu-24.04-arm
+            flutter_arch: arm64
             sfx: "-arm64"
     runs-on: ${{ matrix.runner }}
     steps:
@@ -40,6 +42,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          architecture: ${{ matrix.flutter_arch }}
           cache: true
 
       - name: Enable Linux desktop
