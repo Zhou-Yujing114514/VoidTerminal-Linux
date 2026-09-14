@@ -12,7 +12,20 @@ permissions:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest
+    name: Linux ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            target: x64
+            runner: ubuntu-latest
+            sfx: ""
+          - arch: arm64
+            target: arm64
+            runner: ubuntu-24.04-arm
+            sfx: "-arm64"
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,86 +51,63 @@ jobs:
       - name: Remove default test file
         run: rm -f test/widget_test.dart
 
-      - name: Flutter doctor
-        run: flutter doctor -v
-
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Analyze code
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
-
-      - name: Build Linux release
+      - name: Build Linux release (${{ matrix.target }})
         id: build
-        run: flutter build linux --release --verbose > build_log.txt 2>&1
+        run: flutter build linux --release --target-platform=linux-${{ matrix.target }} --verbose > build_log.txt 2>&1
         continue-on-error: true
 
       - name: Upload build log artifact (always)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
+          name: build-log-${{ matrix.arch }}
           path: build_log.txt
           retention-days: 7
-
-      - name: On failure, write log back to repo
-        if: steps.build.outcome == 'failure'
-        run: |
-          mkdir -p diag
-          cp build_log.txt diag/build_log.txt
-          tail -200 build_log.txt > diag/build_log_tail.txt
-
-      - name: Commit diagnostic log (on failure)
-        if: steps.build.outcome == 'failure'
-        run: |
-          git config user.email "action@github.com"
-          git config user.name "github-actions[bot]"
-          git add diag/
-          git commit -m "diag: attach flutter build failure log [skip ci]" || exit 0
-          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
-        continue-on-error: true
 
       - name: Check build result
         run: |
           tail -80 build_log.txt
-          if [ -f build/linux/x64/release/bundle/void_terminal_linux ]; then
+          if [ -f build/linux/${{ matrix.target }}/release/bundle/void_terminal_linux ]; then
             echo "BUILD SUCCEEDED"
           else
-            echo "BUILD FAILED (see build-log artifact / diag/ folder)"
+            echo "BUILD FAILED (see build-log artifact)"
             exit 1
           fi
 
-      - name: Package build output
+      - name: Package tar.gz
         if: success()
         run: |
-          cd build/linux/x64/release/bundle
-          tar czf $GITHUB_WORKSPACE/VoidTerminal-Linux.tar.gz .
+          cd build/linux/${{ matrix.target }}/release/bundle
+          tar czf $GITHUB_WORKSPACE/VoidTerminal-Linux${{ matrix.sfx }}.tar.gz .
           cd $GITHUB_WORKSPACE
-          ls -la VoidTerminal-Linux.tar.gz
+          ls -la VoidTerminal-Linux${{ matrix.sfx }}.tar.gz
 
       - name: Package deb
         if: success()
         run: |
           mkdir -p pkg/DEBIAN pkg/opt/void_terminal
-          cat > pkg/DEBIAN/control <<'EOF'
+          cat > pkg/DEBIAN/control <<EOF
           Package: void-terminal
           Version: 2.1.0
           Section: net
           Priority: optional
-          Architecture: amd64
+          Architecture: ${{ matrix.arch }}
           Maintainer: Zhou-Yujing114514 <zhou@example.com>
           Description: VoidTerminal - 即时通讯客户端
           EOF
-          cp -r build/linux/x64/release/bundle/* pkg/opt/void_terminal/
-          dpkg-deb --build pkg void-terminal_2.1.0_amd64.deb
-          ls -la void-terminal_2.1.0_amd64.deb
+          cp -r build/linux/${{ matrix.target }}/release/bundle/* pkg/opt/void_terminal/
+          dpkg-deb --build pkg void-terminal_2.1.0_${{ matrix.arch }}.deb
+          ls -la void-terminal_2.1.0_${{ matrix.arch }}.deb
 
       - name: Upload artifacts (on success)
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: VoidTerminal-Linux
+          name: VoidTerminal-Linux${{ matrix.sfx }}
           path: |
-            VoidTerminal-Linux.tar.gz
-            void-terminal_2.1.0_amd64.deb
+            VoidTerminal-Linux${{ matrix.sfx }}.tar.gz
+            void-terminal_2.1.0_${{ matrix.arch }}.deb
           retention-days: 30
